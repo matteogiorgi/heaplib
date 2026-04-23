@@ -66,25 +66,50 @@ More advanced operations may be added later:
 
 
 
-## Current Repository Contents
+## Repository Layout
 
-- `binaryheap.h`: public interface for the current binary-heap implementation
-- `binaryheap.c`: generic min-heap implementation based on `void **` and a
-  comparator function
-- `binaryheap_demo.c`: usage demo program
-- `binaryheap_test.c`: automated tests using `assert`
-- `Makefile`: builds the object file, demo, and tests
+- `include/`: public headers installed or consumed by client code.
+- `include/pqlib/`: public namespace for pqlib headers.
+- `include/pqlib/priority_queue.h`: abstract priority-queue API, comparator
+  type, implementation selector, and public operations.
+- `src/`: private implementation sources for the library.
+- `src/priority_queue.c`: public API dispatch, null handling, and factory that
+  selects a concrete implementation.
+- `src/priority_queue_internal.h`: private base object layout and vtable used by
+  concrete implementations.
+- `src/heaps/`: concrete heap-based priority-queue implementations.
+- `src/heaps/binary_heap.h`: private factory for the binary-heap backend.
+- `src/heaps/binary_heap.c`: binary min-heap backend implementing the
+  `priority_queue` vtable.
+- `examples/`: small programs showing how to use the public API.
+- `examples/priority_queue_demo.c`: demo that creates a binary-heap-backed
+  priority queue and prints integers in priority order.
+- `tests/`: automated tests for public behavior.
+- `tests/priority_queue_test.c`: assert-based tests for create, empty, push,
+  peek, pop, size, duplicate handling, and invalid comparator handling.
+- `legacy/`: reference code kept during the transition to the abstract API.
+- `legacy/binaryheap/`: original direct binary-heap implementation.
+- `legacy/binaryheap/binaryheap.h`: old public header for the standalone binary
+  heap.
+- `legacy/binaryheap/binaryheap.c`: old generic min-heap implementation based on
+  `void **`.
+- `legacy/binaryheap/binaryheap_demo.c`: old demo using the standalone
+  `binaryheap` API.
+- `legacy/binaryheap/binaryheap_test.c`: old assert-based tests for the
+  standalone `binaryheap` API.
+- `ISTRUZIONI.txt`: project notes and architectural requirements.
+- `Makefile`: builds the static library, demo, and tests.
+- `.gitignore`: excludes build outputs and local development artifacts.
 
-The current code still exposes the binary heap directly. The next architectural
-step is to introduce the abstract `priority_queue` API and adapt the binary
-heap as its first concrete implementation.
+The legacy `binaryheap.*` files are kept as a direct implementation reference,
+but the active library entry point is now the abstract `priority_queue` API.
 
 
 
 
 ## Useful Commands
 
-- `make`: builds `binaryheap.o`
+- `make`: builds `build/libpqlib.a`
 - `make run`: builds and runs the demo
 - `make test`: builds and runs the tests
 - `make clean`: removes build artifacts

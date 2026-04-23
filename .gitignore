@@ -10,5 +10,6 @@ report/*
 .vscode/*
 .codex
 
-binaryheap_demo
-binaryheap_test
+priority_queue_demo
+priority_queue_test
+build/
