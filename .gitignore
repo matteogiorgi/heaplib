@@ -3,6 +3,8 @@ tags
 *.gr
 *.gz
 *.o
+*.so
+*.egg-info/
 
 report/*
 !report/*.tex

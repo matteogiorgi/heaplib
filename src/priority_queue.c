@@ -3,7 +3,11 @@
 #include "pqlib/priority_queue.h"
 #include "priority_queue_internal.h"
 #include "heaps/binary_heap.h"
+#include "skiplists/randomized_skiplist.h"
 
+/*
+ * Initialize the base object shared by all concrete priority queues.
+ */
 void priority_queue_init(
     struct priority_queue *queue,
     const struct priority_queue_vtable *vtable,
@@ -14,6 +18,12 @@ void priority_queue_init(
     queue->cmp = cmp;
 }
 
+/*
+ * Public factory for priority queues.
+ *
+ * The factory keeps implementation selection centralized so callers do not
+ * depend on private backend headers or concrete object layouts.
+ */
 struct priority_queue *priority_queue_create(
     enum priority_queue_implementation implementation,
     priority_queue_cmp_fn cmp
@@ -25,11 +35,19 @@ struct priority_queue *priority_queue_create(
     switch (implementation) {
     case PRIORITY_QUEUE_BINARY_HEAP:
         return binary_heap_create(cmp);
+    case PRIORITY_QUEUE_RANDOMIZED_SKIPLIST:
+        return randomized_skiplist_create(cmp);
     default:
         return NULL;
     }
 }
 
+/*
+ * Public API dispatch functions.
+ *
+ * These wrappers define the NULL-handle behavior once and keep concrete
+ * implementations focused on valid queue instances.
+ */
 void priority_queue_destroy(struct priority_queue *queue)
 {
     if (queue == NULL)
