@@ -5,6 +5,7 @@ tags
 *.o
 *.so
 *.egg-info/
+dist/
 
 report/*
 !report/*.tex

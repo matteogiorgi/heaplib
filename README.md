@@ -11,7 +11,8 @@ The repository currently contains:
 - a binary min-heap implementation;
 - a randomized skiplist implementation;
 - a CPython extension module exposing the same queue concept as
-  `pqlib.PriorityQueue`.
+  `pqlib.PriorityQueue`;
+- additional documentation under `docs/`.
 
 Planned implementations include Fibonacci heaps, Kaplan heaps, deterministic
 skiplists, chunked skiplists, and other structures useful for comparisons.
@@ -173,6 +174,10 @@ Build and install from the repository root:
 python3 -m pip install .
 ```
 
+This source installation compiles the extension during installation. It does not
+require running `make python-build` first, but it does require a C compiler and
+Python development headers on the machine performing the install.
+
 On Debian, Ubuntu, and other systems that protect the system Python
 environment, install pqlib inside a virtual environment. The virtual environment
 does not need to live inside the repository; you can create it anywhere and
@@ -198,6 +203,12 @@ You can also build the extension in-place without installing it:
 
 ```sh
 make python-build
+```
+
+To install from a prebuilt wheel instead of compiling locally:
+
+```sh
+python3 -m pip install dist/pqlib-*.whl
 ```
 
 Python usage:
@@ -268,6 +279,24 @@ Build and run the Python binding smoke tests:
 make python-test
 ```
 
+Build a wheel for the current platform and Python version:
+
+```sh
+make wheel
+```
+
+Run the local release workflow:
+
+```sh
+make release VERSION=0.1.0
+```
+
+Build and upload the wheel to a GitHub Release:
+
+```sh
+make release-upload VERSION=0.1.0
+```
+
 Clean generated artifacts:
 
 ```sh
@@ -299,7 +328,9 @@ sudo apt install build-essential python3-dev
 ```
 
 Precompiled wheels are not generated yet. Until release automation is added,
-`pip install .` builds the extension locally.
+`pip install .` builds the extension locally. The project includes a basic
+`cibuildwheel` configuration in `pyproject.toml` for future release automation
+across multiple Python versions and operating systems.
 
 
 
@@ -317,12 +348,28 @@ Precompiled wheels are not generated yet. Until release automation is added,
 - `src/skiplists/randomized_skiplist.c`: randomized skiplist backend.
 - `python/`: CPython extension source.
 - `python/pqlibmodule.c`: Python binding implementation.
+- `docs/`: focused documentation pages for C usage, Python usage, and
+  packaging.
+- `scripts/release.sh`: internal release helper used by the Makefile release
+  targets.
 - `examples/`: small C usage examples.
 - `tests/`: C and Python tests.
 - `legacy/`: original binary-heap implementation kept as reference code.
 - `Makefile`: C build, demo, tests, and Python helper targets.
 - `pyproject.toml`, `setup.py`, `MANIFEST.in`: Python packaging files.
 - `ISTRUZIONI.txt`: project notes and architectural requirements.
+
+
+
+
+## Additional Documentation
+
+The README is the main entry point. More focused documentation is available in:
+
+- [docs/index.md](docs/index.md)
+- [docs/c-api.md](docs/c-api.md)
+- [docs/python-api.md](docs/python-api.md)
+- [docs/building.md](docs/building.md)
 
 
 

@@ -1,3 +1,7 @@
 [build-system]
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
+test-command = "python -c \"import pqlib; q=pqlib.PriorityQueue(); q.push(2); q.push(1); assert q.pop() == 1\""

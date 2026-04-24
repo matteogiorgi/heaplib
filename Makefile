@@ -13,7 +13,7 @@ SRC_DEMO := examples/priority_queue_demo.c
 SRC_TEST := tests/priority_queue_test.c
 PUBLIC_HEADERS := include/pqlib/priority_queue.h
 INTERNAL_HEADERS := src/priority_queue_internal.h src/heaps/binary_heap.h src/skiplists/randomized_skiplist.h
-.PHONY: all clean run test python-build python-test
+.PHONY: all clean run test python-build python-test wheel release release-upload
 
 
 all: $(LIB)
@@ -45,6 +45,27 @@ python-build:
 
 python-test: python-build
 	python3 tests/python_priority_queue_test.py
+
+wheel:
+	python3 -m pip wheel . --no-deps --no-build-isolation -w dist
+
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=0.1.0"; \
+		exit 2; \
+	fi
+	scripts/release.sh $(VERSION)
+
+release-upload:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release-upload VERSION=0.1.0 [REPO=OWNER/REPO]"; \
+		exit 2; \
+	fi
+	@if [ -n "$(REPO)" ]; then \
+		scripts/release.sh $(VERSION) --upload --repo $(REPO); \
+	else \
+		scripts/release.sh $(VERSION) --upload; \
+	fi
 
 clean:
 	rm -rf $(BUILD_DIR)
