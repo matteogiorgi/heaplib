@@ -1,9 +1,10 @@
 #include <stddef.h>
 
-#include "pqlib/priority_queue.h"
+#include "hpqlib/priority_queue.h"
 #include "priority_queue_internal.h"
 #include "heaps/binary_heap.h"
-#include "skiplists/randomized_skiplist.h"
+#include "heaps/fibonacci_heap.h"
+#include "heaps/kaplan_heap.h"
 
 /*
  * Initialize the base object shared by all concrete priority queues.
@@ -35,8 +36,10 @@ struct priority_queue *priority_queue_create(
     switch (implementation) {
     case PRIORITY_QUEUE_BINARY_HEAP:
         return binary_heap_create(cmp);
-    case PRIORITY_QUEUE_RANDOMIZED_SKIPLIST:
-        return randomized_skiplist_create(cmp);
+    case PRIORITY_QUEUE_FIBONACCI_HEAP:
+        return fibonacci_heap_create(cmp);
+    case PRIORITY_QUEUE_KAPLAN_HEAP:
+        return kaplan_heap_create(cmp);
     default:
         return NULL;
     }

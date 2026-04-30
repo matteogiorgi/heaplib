@@ -5,14 +5,8 @@ import sys
 
 # Allow direct execution from the source tree after an in-place extension build.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "experiments"))
 
-from road_network_experiment import (  # noqa: E402
-    write_push_trace_csv,
-    write_summary_json,
-)
-
-from learning_augmented_priority_queue import (
+from pq_experiments import (
     RankPredictionPriorityQueue,
     aggregate_rank_stats,
     build_key_rank_predictor,
@@ -22,6 +16,8 @@ from learning_augmented_priority_queue import (
     load_dimacs_graph,
     node_rank_error_stats,
     true_ranks,
+    write_push_trace_csv,
+    write_summary_json,
 )
 
 
@@ -83,7 +79,7 @@ def test_rank_predictions_with_bounded_noise():
         8: 1,
         9: 0,
     }
-    queue = RankPredictionPriorityQueue(implementation="randomized_skiplist")
+    queue = RankPredictionPriorityQueue(implementation="binary_heap")
 
     for value in values:
         queue.push(
@@ -128,7 +124,7 @@ def test_rank_predictions_with_explicit_priorities():
     ranks = true_ranks(items, key=lambda item: item[1])
     queue = RankPredictionPriorityQueue(
         key=lambda item: item[1],
-        implementation="randomized_skiplist",
+        implementation="binary_heap",
     )
 
     for item in items:
@@ -155,7 +151,7 @@ def sample_graph():
     }
 
 
-def test_dijkstra_with_trace_uses_pqlib_priority_queue():
+def test_dijkstra_with_trace_uses_hpqlib_priority_queue():
     trace = dijkstra_with_trace(
         sample_graph(),
         "A",
@@ -216,7 +212,7 @@ def test_dijkstra_node_rank_predictions_from_previous_run():
     current = dijkstra_with_trace(
         graph,
         "B",
-        implementation="randomized_skiplist",
+        implementation="binary_heap",
         node_rank_predictor=predictor,
     )
 
@@ -326,11 +322,11 @@ def test_load_dimacs_graph_can_limit_large_inputs(tmp_path=None):
     assert list(loaded.neighbors(3)) == []
 
 
-def test_road_network_experiment_writes_summary_json(tmp_path=None):
+def test_result_helpers_write_summary_json(tmp_path=None):
     if tmp_path is None:
         tmp_path = pathlib.Path("/tmp")
 
-    output_path = tmp_path / "pqlib-summary.json"
+    output_path = tmp_path / "hpqlib-summary.json"
     write_summary_json(output_path, {"aggregate": {"pushes": 3}})
 
     assert json.loads(output_path.read_text(encoding="utf-8")) == {
@@ -340,11 +336,11 @@ def test_road_network_experiment_writes_summary_json(tmp_path=None):
     }
 
 
-def test_road_network_experiment_writes_push_trace_csv(tmp_path=None):
+def test_result_helpers_write_push_trace_csv(tmp_path=None):
     if tmp_path is None:
         tmp_path = pathlib.Path("/tmp")
 
-    output_path = tmp_path / "pqlib-push-trace.csv"
+    output_path = tmp_path / "hpqlib-push-trace.csv"
     write_push_trace_csv(output_path, [
         {
             "run": 1,
@@ -385,14 +381,14 @@ def main():
     test_rank_predictions_with_bounded_noise()
     test_rank_predictions_with_reversed_predictions_still_pop_in_true_order()
     test_rank_predictions_with_explicit_priorities()
-    test_dijkstra_with_trace_uses_pqlib_priority_queue()
+    test_dijkstra_with_trace_uses_hpqlib_priority_queue()
     test_dijkstra_node_rank_predictions_from_previous_run()
     test_dijkstra_key_rank_predictions_from_previous_run()
     test_aggregate_rank_stats()
     test_load_dimacs_graph()
     test_load_dimacs_graph_can_limit_large_inputs()
-    test_road_network_experiment_writes_summary_json()
-    test_road_network_experiment_writes_push_trace_csv()
+    test_result_helpers_write_summary_json()
+    test_result_helpers_write_push_trace_csv()
     print("All learning-augmented priority_queue tests passed")
 
 

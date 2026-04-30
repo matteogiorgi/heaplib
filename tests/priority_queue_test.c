@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "pqlib/priority_queue.h"
+#include "hpqlib/priority_queue.h"
 
 static int int_cmp(const void *lhs, const void *rhs)
 {
@@ -20,7 +20,14 @@ static int int_cmp(const void *lhs, const void *rhs)
 static void test_create_rejects_missing_cmp(void)
 {
     assert(priority_queue_create(PRIORITY_QUEUE_BINARY_HEAP, NULL) == NULL);
-    assert(priority_queue_create(PRIORITY_QUEUE_RANDOMIZED_SKIPLIST, NULL) == NULL);
+    assert(priority_queue_create(PRIORITY_QUEUE_FIBONACCI_HEAP, NULL) == NULL);
+    assert(priority_queue_create(PRIORITY_QUEUE_KAPLAN_HEAP, NULL) == NULL);
+}
+
+static void test_planned_heaps_are_not_implemented_yet(void)
+{
+    assert(priority_queue_create(PRIORITY_QUEUE_FIBONACCI_HEAP, int_cmp) == NULL);
+    assert(priority_queue_create(PRIORITY_QUEUE_KAPLAN_HEAP, int_cmp) == NULL);
 }
 
 static void test_empty_queue(enum priority_queue_implementation implementation)
@@ -83,12 +90,12 @@ static void test_duplicates(enum priority_queue_implementation implementation)
 int main(void)
 {
     enum priority_queue_implementation implementations[] = {
-        PRIORITY_QUEUE_BINARY_HEAP,
-        PRIORITY_QUEUE_RANDOMIZED_SKIPLIST
+        PRIORITY_QUEUE_BINARY_HEAP
     };
     size_t i;
 
     test_create_rejects_missing_cmp();
+    test_planned_heaps_are_not_implemented_yet();
 
     for (i = 0; i < sizeof(implementations) / sizeof(implementations[0]); i++) {
         test_empty_queue(implementations[i]);

@@ -4,11 +4,11 @@ import sys
 # Allow direct execution from the source tree after an in-place extension build.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
-import pqlib
+import hpqlib
 
 
 def check_priority_queue(implementation):
-    queue = pqlib.PriorityQueue(implementation=implementation)
+    queue = hpqlib.PriorityQueue(implementation=implementation)
 
     assert not queue
     assert len(queue) == 0
@@ -29,17 +29,28 @@ def check_priority_queue(implementation):
 
 def test_invalid_implementation():
     try:
-        pqlib.PriorityQueue(implementation="missing")
+        hpqlib.PriorityQueue(implementation="missing")
     except ValueError:
         return
 
     raise AssertionError("invalid implementation was accepted")
 
 
+def test_planned_implementations_are_not_available_yet():
+    for implementation in ["fibonacci_heap", "kaplan_heap"]:
+        try:
+            hpqlib.PriorityQueue(implementation=implementation)
+        except NotImplementedError as error:
+            assert implementation in str(error)
+            continue
+
+        raise AssertionError(f"{implementation} was accepted")
+
+
 def main():
     check_priority_queue("binary_heap")
-    check_priority_queue("randomized_skiplist")
     test_invalid_implementation()
+    test_planned_implementations_are_not_available_yet()
     print("All Python priority_queue tests passed")
 
 

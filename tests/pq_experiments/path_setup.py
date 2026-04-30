@@ -5,7 +5,7 @@ import sys
 
 
 def add_repo_root_to_path() -> None:
-    """Allow importing the in-place pqlib extension from tests."""
+    """Allow importing the in-place hpqlib extension from tests."""
 
     repo_root = pathlib.Path(__file__).resolve().parents[2]
     repo_root_text = str(repo_root)

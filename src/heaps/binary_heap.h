@@ -1,7 +1,7 @@
-#ifndef PQLIB_HEAPS_BINARY_HEAP_H
-#define PQLIB_HEAPS_BINARY_HEAP_H
+#ifndef HPQLIB_HEAPS_BINARY_HEAP_H
+#define HPQLIB_HEAPS_BINARY_HEAP_H
 
-#include "pqlib/priority_queue.h"
+#include "hpqlib/priority_queue.h"
 
 /*
  * Create a priority_queue backed by a binary min-heap.

@@ -1,4 +1,4 @@
-"""Python-only helpers for pqlib experiments."""
+"""Python-only helpers for hpqlib experiments."""
 
 from .dijkstra import dijkstra_with_trace
 from .dimacs import CsrGraph, DimacsGraph, load_dimacs_graph
@@ -12,6 +12,7 @@ from .predictions import (
     true_ranks,
 )
 from .rank_queue import RankPredictionPriorityQueue
+from .results import write_push_trace_csv, write_summary_json
 
 LearningAugmentedPriorityQueue = RankPredictionPriorityQueue
 
@@ -29,4 +30,6 @@ __all__ = [
     "node_rank_error_stats",
     "rank_prediction_stats",
     "true_ranks",
+    "write_push_trace_csv",
+    "write_summary_json",
 ]

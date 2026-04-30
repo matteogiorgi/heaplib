@@ -7,7 +7,7 @@ from .path_setup import add_repo_root_to_path
 
 add_repo_root_to_path()
 
-import pqlib
+import hpqlib
 
 
 @dataclass(order=True)
@@ -18,12 +18,12 @@ class _RankEntry:
 
 
 class RankPredictionPriorityQueue:
-    """Rank-prediction prototype built on the native pqlib queue.
+    """Rank-prediction prototype built on the native hpqlib queue.
 
     The paper's rank-prediction model gives every inserted key a prediction of
     its final rank among all keys. This first Python prototype records those
     prediction errors while preserving exact priority-queue semantics through
-    the native pqlib queue.
+    the native hpqlib queue.
     """
 
     def __init__(
@@ -33,7 +33,7 @@ class RankPredictionPriorityQueue:
         implementation: str = "binary_heap",
     ) -> None:
         self._key = key if key is not None else (lambda item: item)
-        self._queue = pqlib.PriorityQueue(implementation=implementation)
+        self._queue = hpqlib.PriorityQueue(implementation=implementation)
         self._sequence = 0
         self._size = 0
         self._insertions = 0

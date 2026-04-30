@@ -1,6 +1,6 @@
 # tests
 
-This directory contains automatic checks for pqlib and Python-side experimental
+This directory contains automatic checks for hpqlib and Python-side experimental
 code used by those checks.
 
 Tests should make failures visible.  They should cover expected behavior, edge
@@ -15,19 +15,20 @@ Code in this directory should generally:
 - verify behavior rather than explain normal usage;
 - keep testing helpers separate from the public C library;
 - include experimental Python prototypes only when they are clearly outside the
-  shipped pqlib API.
+  shipped hpqlib API.
 
-User-facing demonstrations belong in `examples/`.
+User-facing demonstrations can live in the README while the project stays
+small.
 
 
 
 
 ## Learning-Augmented Priority Queue Experiments
 
-The paper `learning_augmented_priority_queues.pdf` studies priority queues in a
-learning-augmented setting: operations may use predictions that can be accurate,
-noisy, or adversarial, but the data structure must still preserve the priority
-queue semantics.
+The paper `docs/papers/learning_augmented_priority_queues.pdf` studies priority
+queues in a learning-augmented setting: operations may use predictions that can
+be accurate, noisy, or adversarial, but the data structure must still preserve
+the priority queue semantics.
 
 The paper focuses on three prediction models.
 
@@ -79,21 +80,19 @@ test instance.
 
 Keep two concerns separate:
 
-- `pqlib.PriorityQueue` tests verify the C library and its CPython binding;
+- `hpqlib.PriorityQueue` tests verify the C library and its CPython binding;
 - learning-augmented tests verify Python-side experimental prototypes that use
-  `pqlib.PriorityQueue` as a building block.
+  `hpqlib.PriorityQueue` as a building block.
 
 Current files follow this split:
 
 - `python_priority_queue_test.py` checks the CPython binding for the native
   priority queue;
-- `learning_augmented_priority_queue.py` re-exports the Python-only
-  experimental helpers from `pq_experiments/`;
 - `pq_experiments/` contains focused modules for graph parsing, Dijkstra
-  tracing, prediction statistics, and prototype queues;
+  tracing, prediction statistics, result-output helpers, and prototype queues;
 - `learning_augmented_priority_queue_test.py` checks those prototypes.
 
-The experimental code in this directory is not part of the shipped pqlib API.
+The experimental code in this directory is not part of the shipped hpqlib API.
 It should be treated as a small laboratory for exploring the paper's models
 before deciding which ideas deserve C implementations.
 
@@ -103,7 +102,7 @@ perfect, noisy, and bad predictions while always checking that `ExtractMin`
 returns the correct sorted order.
 
 The current Python experiments also include a lazy Dijkstra runner using
-`pqlib.PriorityQueue` as its backend.  Its purpose is not to change the C data
+`hpqlib.PriorityQueue` as its backend.  Its purpose is not to change the C data
 structure, but to collect traces from graph-search runs:
 
 - final distances;
@@ -124,21 +123,5 @@ prediction signals before any optional hint API is added to the C library.
 DIMACS shortest-path graphs, such as road-network `.gr` files from the 9th
 DIMACS Challenge, can be loaded with `load_dimacs_graph(path)`.  The loader uses
 a CSR representation backed by standard-library `array` objects.  The automatic
-tests use small generated fixtures; large real road networks should be used for
-manual experiments or future benchmark scripts, not as mandatory quick tests.
-
-Manual road-network experiments live under `experiments/`.  For example:
-
-```sh
-python3 experiments/road_network_experiment.py graphs/dimacs/USA-road-d.NY.gr --sources 1,1000,10000
-```
-
-Use `--summary-json` to save aggregate data and `--push-trace-csv` to save the
-optional per-push trace:
-
-```sh
-python3 experiments/road_network_experiment.py graphs/dimacs/USA-road-d.NY.gr \
-  --sources 1,1000,10000 \
-  --summary-json experiments/results/ny-summary.json \
-  --push-trace-csv experiments/results/ny-push-trace.csv
-```
+tests use small generated fixtures; large real road networks should be reserved
+for manual checks or future benchmark scripts, not mandatory quick tests.

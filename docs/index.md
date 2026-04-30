@@ -1,25 +1,24 @@
-# pqlib Documentation
+# hpqlib Documentation
 
-pqlib is a C99 priority-queue library with a CPython extension module.
+hpqlib is a C99 heap-priority-queue library with a small CPython binding.
 
-The project exposes one abstract priority-queue API and lets callers choose the
-concrete backend at construction time. This keeps client code independent from
-the data structure used internally.
+The documentation is organized as a reference first: public types and functions
+are documented with signatures, parameters, return values, ownership rules, and
+failure behavior.
 
-## Documentation Map
+## API Reference
 
-- [C API](c-api.md): public C interface, ownership rules, and examples.
-- [Python API](python-api.md): `pqlib.PriorityQueue` usage and behavior.
-- [Build And Packaging](building.md): local builds, tests, installation, and
-  wheel generation.
+- [priority_queue](api/priority_queue.md): public C abstract data type.
+- [Heap Implementations](api/implementations.md): implemented and planned
+  heap backends.
+- [Python API](api/python.md): `hpqlib.PriorityQueue` constructor, methods, and
+  exceptions.
 
-## Implementations
+## Build And Packaging
 
-| Implementation | C selector | Python selector | Status |
-| --- | --- | --- | --- |
-| Binary heap | `PRIORITY_QUEUE_BINARY_HEAP` | `"binary_heap"` | implemented |
-| Randomized skiplist | `PRIORITY_QUEUE_RANDOMIZED_SKIPLIST` | `"randomized_skiplist"` | implemented |
-| Fibonacci heap | `PRIORITY_QUEUE_FIBONACCI_HEAP` | `"fibonacci_heap"` | planned |
-| Kaplan heap | `PRIORITY_QUEUE_KAPLAN_HEAP` | `"kaplan_heap"` | planned |
-| Deterministic skiplist | `PRIORITY_QUEUE_DETERMINISTIC_SKIPLIST` | `"deterministic_skiplist"` | planned |
-| Chunked skiplist | `PRIORITY_QUEUE_CHUNKED_SKIPLIST` | `"chunked_skiplist"` | planned |
+- [Build And Packaging](building.md): local C builds, Python extension builds,
+  wheels, and release workflow.
+
+## Papers
+
+Reference papers used while developing the project live under `docs/papers/`.

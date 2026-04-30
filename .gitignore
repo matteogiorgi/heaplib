@@ -1,6 +1,6 @@
 tags
 *~
-# *.gr
+*.gr
 *.gz
 *.o
 *.so
@@ -8,14 +8,15 @@ tags
 __pycache__/
 *.egg-info/
 dist/
-experiments/results/
+results/*
+!results/README.md
+!results/.gitkeep
 
 report/*
 !report/*.tex
 
-.vscode/*
+.vscode/
 .codex
 
-priority_queue_demo
 priority_queue_test
 build/

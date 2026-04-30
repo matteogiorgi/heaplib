@@ -2,6 +2,13 @@
 requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "hpqlib"
+version = "0.1.0"
+description = "C99 heap-priority-queue library with Python bindings"
+readme = "README.md"
+requires-python = ">=3.8"
+
 [tool.cibuildwheel]
 build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
-test-command = "python -c \"import pqlib; q=pqlib.PriorityQueue(); q.push(2); q.push(1); assert q.pop() == 1\""
+test-command = "python -c \"import hpqlib; q=hpqlib.PriorityQueue(); q.push(2); q.push(1); assert q.pop() == 1\""

@@ -1,35 +1,36 @@
 # Istruzioni repo
 
-Le intenzioni di questo repository sono quelle di creare una libreria che gestisca le priority-queue in diverse modalità:
+Le intenzioni di questo repository sono quelle di creare una libreria compatta
+e specializzata per heap-priority-queue.
+
+Il progetto non deve diventare una libreria generica di priority-queue basata
+su famiglie eterogenee di strutture dati. Per mantenere il codice più mirato e
+confrontabile, le implementazioni supportate e previste devono rimanere
+heap-based:
 
 - heap binari;
 - heap di Fibonacci;
-- heap di Fibonacci revisited (qui chiamati heap di Kaplan);
-- randomized skiplist;
-- deterministic skiplist;
-- chunked skiplist;
+- heap di Fibonacci revisited (qui chiamati heap di Kaplan).
 
-e lascia spazio ad altre implementazioni future che sfruttano altre strutture dati.
+Implementazioni basate su strutture dati non heap-based non fanno parte dello
+scopo del repository.
 
 
 
 
 ## Tassonomia
 
-La seguente tassonomia serve per chiarire cosa deve essere implementato, in realtà sono tutte implementazioni concrete della stessa API pubblica priority-queue:
+La seguente tassonomia serve per chiarire cosa deve essere implementato. Le
+strutture concrete sono tutte varianti heap-based della stessa API pubblica:
 
 - ADT pubblico:
     + priority_queue
-- famiglie implementative:
+- famiglia implementativa:
     + heaps/
-    + skiplists/
 - implementazioni concrete:
     + binary_heap
     + fibonacci_heap
     + kaplan_heap
-    + randomized_skiplist
-    + deterministic_skiplist
-    + chunked_skiplist
 
 
 
@@ -37,9 +38,9 @@ La seguente tassonomia serve per chiarire cosa deve essere implementato, in real
 ## Note architetturali
 
 - esiste una sola API astratta pubblica: priority_queue;
-- le famiglie heaps/ e skiplists/ sono solo categorie organizzative;
-- ogni implementazione concreta fornisce direttamente la vtable della priority_queue;
-- non sono previste vtable intermedie per heap o skiplist, salvo necessità future.
+- la famiglia heaps/ è la categoria organizzativa principale del progetto;
+- ogni implementazione concreta heap-based fornisce direttamente la vtable della priority_queue;
+- non sono previste vtable intermedie per heap, salvo necessità future.
 
 
 
@@ -50,7 +51,7 @@ Si richiede che il codice abbia le seguenti caratteristiche:
 
 - deve essere implementato interamente in C99 (per avere massima portabilità);
 - deve essere strutturato in modo modulare, separando interfaccia e implementazione delle strutture dati;
-- ogni priority-queue sarà esposta tramite un’API astratta comune, mentre le diverse varianti concrete (ad esempio implementazioni basate su heap, skip-list o altre strutture dati) forniranno implementazioni distinte della stessa interfaccia logica;
+- ogni heap-priority-queue sarà esposta tramite un’API astratta comune, mentre le diverse varianti concrete heap-based forniranno implementazioni distinte della stessa interfaccia logica;
 - l’organizzazione del codice ricalca il modello tipico dei linguaggi object-oriented come Java o Scala, ma adattato idiomaticamente al C.
 
 
@@ -87,7 +88,7 @@ Le seguenti sono le due fasi di sviluppo del repository, con un focus iniziale s
 ## Fase 1: esperimenti Python senza toccare la C API
 
 Prima validiamo che le predizioni abbiano senso.
-Aggiungiamo in `tests/learning_augmented_priority_queue.py` funzioni per Dijkstra con trace:
+Aggiungiamo in `tests/pq_experiments/` funzioni per Dijkstra con trace:
 
 ```
 dijkstra_with_trace(graph, source, implementation="binary_heap")
@@ -125,8 +126,8 @@ Il parser deve leggere file `.gr` con righe `c`, `p sp <nodes> <arcs>` e
 La rappresentazione in memoria dei grafi DIMACS deve essere CSR, usando `array`
 della standard library per ridurre l'overhead sui grafi grandi.
 I test automatici devono usare fixture piccole; grafi grandi come
-`graphs/dimacs/USA-road-d.NY.gr` sono destinati a esperimenti o benchmark
-manuali.
+i dataset DIMACS reali sono destinati a esperimenti o benchmark manuali e non
+devono essere tracciati in git.
 
 E testiamo:
 1. Dijkstra produce distanze corrette;
@@ -134,17 +135,18 @@ E testiamo:
 3. le predizioni hanno errori misurabili;
 4. le predizioni non rompono la correttezza perché la C queue resta il backend reale.
 
-Per completare questa fase, aggiungiamo anche uno script manuale in
-`experiments/road_network_experiment.py` che:
+Per completare questa fase, raccogliamo nei test e nei risultati manuali dati
+che:
 
-- usa davvero un grafo DIMACS come `graphs/dimacs/USA-road-d.NY.gr`;
+- usa davvero un grafo DIMACS scaricato localmente;
 - esegue Dijkstra da più sorgenti;
 - usa ogni run per predire la successiva;
 - confronta predizioni node-rank e key-rank;
 - stampa statistiche aggregate su errori di predizione, push, pop, stale entries
   e nodi raggiunti.
 
-Questo ci dà dati concreti.
+Questo ci dà dati concreti senza introdurre una directory separata per script
+sperimentali finché il progetto resta piccolo.
 
 
 

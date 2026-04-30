@@ -14,12 +14,6 @@ Run the C tests:
 make test
 ```
 
-Run the C demo:
-
-```sh
-make run
-```
-
 ## Python Development Build
 
 Build the Python extension in-place:
@@ -39,7 +33,7 @@ make python-test
 Inside a virtual environment:
 
 ```sh
-python3 -m pip install /path/to/pqlib
+python3 -m pip install /path/to/hpqlib
 ```
 
 This command compiles the extension during installation. It does not require a
@@ -57,7 +51,7 @@ make wheel
 The generated file is written to `dist/` and can be installed with:
 
 ```sh
-python3 -m pip install dist/pqlib-*.whl
+python3 -m pip install dist/hpqlib-*.whl
 ```
 
 Wheel files are platform-specific for this project because the package contains
@@ -119,6 +113,6 @@ explicitly:
 make release-upload VERSION=0.1.0 REPO=OWNER/REPO
 ```
 
-Internally, the Make targets call `scripts/release.sh`. The script keeps the
+Internally, the Make targets call `release.sh`. The script keeps the
 argument parsing and GitHub Release logic out of the Makefile, while the
 Makefile remains the recommended user-facing command surface.

@@ -1,9 +1,9 @@
-#ifndef PQLIB_PRIORITY_QUEUE_INTERNAL_H
-#define PQLIB_PRIORITY_QUEUE_INTERNAL_H
+#ifndef HPQLIB_PRIORITY_QUEUE_INTERNAL_H
+#define HPQLIB_PRIORITY_QUEUE_INTERNAL_H
 
 #include <stddef.h>
 
-#include "pqlib/priority_queue.h"
+#include "hpqlib/priority_queue.h"
 
 /*
  * Implementation dispatch table for the abstract priority_queue API.

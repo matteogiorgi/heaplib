@@ -1,4 +1,4 @@
-"""Dijkstra experiments backed by the pqlib CPython extension."""
+"""Dijkstra experiments backed by the hpqlib CPython extension."""
 
 from dataclasses import dataclass, field
 from math import inf
@@ -8,7 +8,7 @@ from .path_setup import add_repo_root_to_path
 
 add_repo_root_to_path()
 
-import pqlib
+import hpqlib
 
 
 @dataclass(order=True)
@@ -39,9 +39,9 @@ def dijkstra_with_trace(
     node_rank_predictor: Optional[Callable[[Any, float], Optional[int]]] = None,
     key_rank_predictor: Optional[Callable[[Any, float], Optional[int]]] = None,
 ) -> Dict[str, Any]:
-    """Run lazy Dijkstra with pqlib and collect prediction-oriented traces."""
+    """Run lazy Dijkstra with hpqlib and collect prediction-oriented traces."""
 
-    queue = pqlib.PriorityQueue(implementation=implementation)
+    queue = hpqlib.PriorityQueue(implementation=implementation)
     distances: Dict[Any, float] = {source: 0.0}
     finalized = set()
     extraction_order: List[Any] = []
