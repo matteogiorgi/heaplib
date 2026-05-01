@@ -14,6 +14,17 @@ Run the C tests:
 make test
 ```
 
+## C API Documentation
+
+Build the generated C API reference:
+
+```sh
+make docs
+```
+
+This requires Doxygen. The generated HTML is written to
+`build/docs/html/index.html` and is treated as a build artifact.
+
 ## Python Development Build
 
 Build the Python extension in-place:

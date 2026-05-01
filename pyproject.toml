@@ -11,4 +11,4 @@ requires-python = ">=3.8"
 
 [tool.cibuildwheel]
 build = "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-*"
-test-command = "python -c \"import hpqlib; q=hpqlib.PriorityQueue(); q.push(2); q.push(1); assert q.pop() == 1\""
+test-command = "python -c \"import hpqlib; q=hpqlib.PriorityQueue(); a=[3]; b=[1]; h=q.push_handle(a); q.push(b); a[0]=0; q.decrease_key(h); assert q.pop() is a; c=[2]; h=q.push_handle(c); assert q.contains(c); assert q.remove(h) is c\""

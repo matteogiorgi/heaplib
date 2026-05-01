@@ -4,6 +4,12 @@ hpqlib is intentionally limited to heap-priority-queue implementations. All
 backends are selected through `priority_queue_create()` and then used through
 the same public `priority_queue` API.
 
+The targeted operations `priority_queue_decrease_key` and
+`priority_queue_remove` use handles returned by `priority_queue_push_handle`.
+This matches the usual heap assumption that the item's position is known.
+`priority_queue_contains` remains a pointer-identity convenience query and is
+linear in the current backends.
+
 ## Summary
 
 | Backend | C selector | Python selector | Status |
@@ -32,6 +38,10 @@ Expected operation costs:
 | Operation | Cost |
 | --- | --- |
 | `priority_queue_push` | `O(log n)` |
+| `priority_queue_push_handle` | `O(log n)` |
+| `priority_queue_decrease_key` | `O(log n)` |
+| `priority_queue_remove` | `O(log n)` |
+| `priority_queue_contains` | `O(n)` |
 | `priority_queue_peek` | `O(1)` |
 | `priority_queue_pop` | `O(log n)` |
 | `priority_queue_size` | `O(1)` |
@@ -63,6 +73,10 @@ Expected operation costs:
 | Operation | Cost |
 | --- | --- |
 | `priority_queue_push` | amortized `O(1)` |
+| `priority_queue_push_handle` | amortized `O(1)` |
+| `priority_queue_decrease_key` | amortized `O(1)` |
+| `priority_queue_remove` | amortized `O(log n)` |
+| `priority_queue_contains` | `O(n)` |
 | `priority_queue_peek` | `O(1)` |
 | `priority_queue_pop` | amortized `O(log n)` |
 | `priority_queue_size` | `O(1)` |
@@ -70,9 +84,11 @@ Expected operation costs:
 
 Notes:
 
-- the current public API does not expose `decrease_key`;
-- the node layout keeps parent/child/degree/mark fields so the backend can be
-  extended later;
+- the node layout keeps parent/child/degree/mark fields for consolidation and
+  cascading cuts;
+- `priority_queue_remove` follows the paper's arbitrary-delete operation:
+  handled non-minimum nodes are cut or removed from the root list, their
+  children are promoted, and cascading cuts repair ancestors;
 - equal-priority items are not guaranteed to pop in insertion order.
 
 ## kaplan_heap
@@ -99,6 +115,10 @@ Expected operation costs:
 | Operation | Cost |
 | --- | --- |
 | `priority_queue_push` | amortized `O(1)` |
+| `priority_queue_push_handle` | amortized `O(1)` |
+| `priority_queue_decrease_key` | amortized `O(1)` cascading rank repair |
+| `priority_queue_remove` | amortized `O(log n)` via delete-by-handle |
+| `priority_queue_contains` | `O(n)` |
 | `priority_queue_peek` | `O(1)` |
 | `priority_queue_pop` | amortized `O(log n)` |
 | `priority_queue_size` | `O(1)` |
@@ -106,7 +126,9 @@ Expected operation costs:
 
 Notes:
 
-- the current public API does not expose `decrease_key`;
-- the node layout keeps parent/child/rank/mark fields so the backend can be
-  extended later;
+- the node layout keeps parent/child/rank/mark fields for fair links and
+  cascading rank repairs;
+- `priority_queue_remove` simulates the paper's delete operation internally by
+  cutting the handled node, making it the logical minimum, and reusing
+  delete-min;
 - equal-priority items are not guaranteed to pop in insertion order.

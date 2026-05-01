@@ -1,10 +1,11 @@
 include README.md
 include ISTRUZIONI.md
+include Doxyfile
+include Makefile
 include pyproject.toml
 include setup.py
 include release.sh
 recursive-include docs *.md
-recursive-include docs/api *.md
 recursive-include docs/papers *.pdf
 recursive-include graphs *.md
 recursive-include include *.h

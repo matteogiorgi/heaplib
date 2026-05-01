@@ -30,6 +30,8 @@ hpqlib is built around a few explicit constraints:
 - Stored items are generic pointers in C and remain owned by the caller.
 - The Python binding stores regular Python objects and manages their reference
   counts while they are inside the queue.
+- Python also exposes handle-based targeted operations through
+  `PriorityQueueHandle`.
 
 
 
@@ -136,7 +138,7 @@ install hpqlib from the repository path:
 cd /tmp
 python3 -m venv hpqlib-env
 source hpqlib-env/bin/activate
-python3 -m pip install /home/matteo/doc/hpqlib
+python3 -m pip install <path to hpqlib>
 ```
 
 After that, `hpqlib` is importable from any directory while that virtual
@@ -199,6 +201,30 @@ Build and run the Python binding smoke tests:
 make python-test
 ```
 
+Run the Python Dijkstra benchmark on the default DIMACS graph:
+
+```sh
+make python-benchmark
+```
+
+Run the C Dijkstra benchmark on the default DIMACS graph under `graphs/dimacs/`:
+
+```sh
+make benchmark-smoke
+```
+
+Run the C Dijkstra benchmark on another local DIMACS `.gr` graph:
+
+```sh
+make benchmark GRAPH=graphs/dimacs/USA-road-d.USA.gr SOURCE=1
+```
+
+Build the generated C API reference:
+
+```sh
+make docs
+```
+
 Build a wheel for the current platform and Python version:
 
 ```sh
@@ -227,7 +253,8 @@ A direct Python test run is also possible after an in-place build:
 
 ```sh
 make python-build
-python3 tests/python_priority_queue_test.py
+python3 tests/priority_queue_test.py
+python3 tests/augmented_priority_queue.py
 ```
 
 
@@ -273,7 +300,8 @@ across multiple Python versions and operating systems.
 - `release.sh`: internal release helper used by the Makefile release targets.
 - `tests/`: C and Python tests.
 - `results/`: optional generated outputs kept outside the test tree.
-- `Makefile`: C build, demo, tests, and Python helper targets.
+- `Makefile`: C build, tests, benchmarks, documentation, and Python helper
+  targets.
 - `pyproject.toml`, `setup.py`, `MANIFEST.in`: Python packaging files.
 - `ISTRUZIONI.md`: project notes and architectural requirements.
 
@@ -285,9 +313,8 @@ across multiple Python versions and operating systems.
 The README is the main entry point. More focused documentation is available in:
 
 - [docs/index.md](docs/index.md)
-- [docs/api/priority_queue.md](docs/api/priority_queue.md)
-- [docs/api/implementations.md](docs/api/implementations.md)
-- [docs/api/python.md](docs/api/python.md)
+- [docs/implementations.md](docs/implementations.md)
+- [docs/python.md](docs/python.md)
 - [docs/building.md](docs/building.md)
 
 
@@ -295,21 +322,25 @@ The README is the main entry point. More focused documentation is available in:
 
 ## Current Limitations
 
-The initial public API intentionally stays small:
+The public C API intentionally stays compact:
 
 - `create`
 - `destroy`
 - `push`
+- `push_handle`
+- `decrease_key`
+- `remove`
+- `contains`
 - `peek`
 - `pop`
 - `size`
 - `empty`
 
-Future operations may include:
-
-- `decrease_key`
-- `remove`
-- `contains`
+The targeted operations `decrease_key` and `remove` use handles returned by
+`push_handle`, matching the usual heap assumption that the item's position is
+known. `contains` remains a pointer-identity convenience query and is linear in
+the current backends. The Python binding exposes the same targeted operations
+through `PriorityQueue.push_handle()`, `decrease_key()`, and `remove()`.
 
 The Python binding currently supports natural Python ordering only. Custom
 `key=` or `cmp=` callables are not implemented yet.

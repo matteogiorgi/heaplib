@@ -12,10 +12,126 @@
  * owns one strong reference for each stored item until it is popped or the
  * queue object is destroyed.
  */
+typedef struct PyPriorityQueueHandle PyPriorityQueueHandle;
+
 typedef struct {
     PyObject_HEAD
     struct priority_queue *queue;
+    PyPriorityQueueHandle *handles;
 } PyPriorityQueue;
+
+struct PyPriorityQueueHandle {
+    PyObject_HEAD
+    struct priority_queue_handle *handle;
+    PyPriorityQueue *owner;
+    PyObject *item;
+    PyPriorityQueueHandle *previous;
+    PyPriorityQueueHandle *next;
+};
+
+static PyTypeObject PyPriorityQueueHandleType;
+
+static void PyPriorityQueueHandle_unlink(PyPriorityQueueHandle *handle)
+{
+    PyPriorityQueue *owner = handle->owner;
+
+    if (owner == NULL)
+        return;
+
+    if (handle->previous != NULL)
+        handle->previous->next = handle->next;
+    else
+        owner->handles = handle->next;
+
+    if (handle->next != NULL)
+        handle->next->previous = handle->previous;
+
+    handle->previous = NULL;
+    handle->next = NULL;
+}
+
+static void PyPriorityQueueHandle_register(
+    PyPriorityQueue *owner,
+    PyPriorityQueueHandle *handle
+)
+{
+    handle->owner = owner;
+    handle->previous = NULL;
+    handle->next = owner->handles;
+
+    if (owner->handles != NULL)
+        owner->handles->previous = handle;
+
+    owner->handles = handle;
+}
+
+static void PyPriorityQueueHandle_invalidate(PyPriorityQueueHandle *handle)
+{
+    PyPriorityQueueHandle_unlink(handle);
+    handle->handle = NULL;
+    handle->owner = NULL;
+    handle->item = NULL;
+}
+
+static void PyPriorityQueue_invalidate_all_handles(PyPriorityQueue *self)
+{
+    while (self->handles != NULL)
+        PyPriorityQueueHandle_invalidate(self->handles);
+}
+
+static void PyPriorityQueueHandle_init(
+    PyPriorityQueueHandle *handle,
+    struct priority_queue_handle *native_handle,
+    PyPriorityQueue *owner,
+    PyObject *item
+)
+{
+    handle->handle = native_handle;
+    handle->item = item;
+    handle->previous = NULL;
+    handle->next = NULL;
+    PyPriorityQueueHandle_register(owner, handle);
+}
+
+static void PyPriorityQueue_invalidate_item_handles(
+    PyPriorityQueue *self,
+    PyObject *item
+)
+{
+    PyPriorityQueueHandle *handle = self->handles;
+
+    while (handle != NULL) {
+        PyPriorityQueueHandle *next = handle->next;
+
+        if (handle->owner == self && handle->item == item)
+            PyPriorityQueueHandle_invalidate(handle);
+
+        handle = next;
+    }
+}
+
+static int PyPriorityQueueHandle_validate(
+    PyPriorityQueue *self,
+    PyObject *object,
+    PyPriorityQueueHandle **handle
+)
+{
+    if (!PyObject_TypeCheck(object, &PyPriorityQueueHandleType)) {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "expected a PriorityQueueHandle created by push_handle()"
+        );
+        return -1;
+    }
+
+    *handle = (PyPriorityQueueHandle *)object;
+    if ((*handle)->owner != self || (*handle)->handle == NULL) {
+        PyErr_SetString(PyExc_ValueError, "priority queue handle is invalid");
+        return -1;
+    }
+
+    return 0;
+}
 
 /*
  * Release the native queue and any Python objects still stored in it.
@@ -25,12 +141,15 @@ static void PyPriorityQueue_clear(PyPriorityQueue *self)
     if (self->queue != NULL) {
         PyObject *item;
 
+        PyPriorityQueue_invalidate_all_handles(self);
         while ((item = priority_queue_pop(self->queue)) != NULL)
             Py_DECREF(item);
 
         priority_queue_destroy(self->queue);
         self->queue = NULL;
     }
+
+    self->handles = NULL;
 }
 
 /*
@@ -160,6 +279,93 @@ static PyObject *PyPriorityQueue_push(PyPriorityQueue *self, PyObject *item)
 }
 
 /*
+ * Store an item and return an opaque handle for targeted operations.
+ */
+static PyObject *PyPriorityQueue_push_handle(
+    PyPriorityQueue *self,
+    PyObject *item
+)
+{
+    struct priority_queue_handle *native_handle;
+    PyPriorityQueueHandle *handle;
+
+    Py_INCREF(item);
+    native_handle = priority_queue_push_handle(self->queue, item);
+    if (native_handle == NULL) {
+        Py_DECREF(item);
+        return PyErr_NoMemory();
+    }
+
+    handle = PyObject_New(PyPriorityQueueHandle, &PyPriorityQueueHandleType);
+    if (handle == NULL) {
+        PyObject *removed = priority_queue_remove(self->queue, native_handle);
+
+        Py_XDECREF(removed);
+        return NULL;
+    }
+
+    PyPriorityQueueHandle_init(handle, native_handle, self, item);
+
+    return (PyObject *)handle;
+}
+
+/*
+ * Repair native heap order after the handled item's key has decreased.
+ */
+static PyObject *PyPriorityQueue_decrease_key(
+    PyPriorityQueue *self,
+    PyObject *object
+)
+{
+    PyPriorityQueueHandle *handle;
+
+    if (PyPriorityQueueHandle_validate(self, object, &handle) != 0)
+        return NULL;
+
+    if (priority_queue_decrease_key(self->queue, handle->handle) != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "decrease_key failed");
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+/*
+ * Remove the item identified by a live handle.
+ */
+static PyObject *PyPriorityQueue_remove(
+    PyPriorityQueue *self,
+    PyObject *object
+)
+{
+    PyPriorityQueueHandle *handle;
+    PyObject *item;
+
+    if (PyPriorityQueueHandle_validate(self, object, &handle) != 0)
+        return NULL;
+
+    item = priority_queue_remove(self->queue, handle->handle);
+    if (item == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "remove failed");
+        return NULL;
+    }
+
+    PyPriorityQueueHandle_invalidate(handle);
+    return item;
+}
+
+/*
+ * Return whether the native queue stores item by pointer identity.
+ */
+static PyObject *PyPriorityQueue_contains(PyPriorityQueue *self, PyObject *item)
+{
+    if (priority_queue_contains(self->queue, item))
+        Py_RETURN_TRUE;
+
+    Py_RETURN_FALSE;
+}
+
+/*
  * Return the highest-priority item without removing it.
  *
  * The native queue retains ownership of its stored reference, so peek returns a
@@ -194,6 +400,7 @@ static PyObject *PyPriorityQueue_pop(
     if (item == NULL)
         Py_RETURN_NONE;
 
+    PyPriorityQueue_invalidate_item_handles(self, item);
     return item;
 }
 
@@ -256,6 +463,30 @@ static PyMethodDef PyPriorityQueue_methods[] = {
         "Insert an item into the priority queue."
     },
     {
+        "push_handle",
+        (PyCFunction) PyPriorityQueue_push_handle,
+        METH_O,
+        "Insert an item and return a handle for targeted operations."
+    },
+    {
+        "decrease_key",
+        (PyCFunction) PyPriorityQueue_decrease_key,
+        METH_O,
+        "Repair queue order after a handled item moves closer to the minimum."
+    },
+    {
+        "remove",
+        (PyCFunction) PyPriorityQueue_remove,
+        METH_O,
+        "Remove and return the item identified by a handle."
+    },
+    {
+        "contains",
+        (PyCFunction) PyPriorityQueue_contains,
+        METH_O,
+        "Return True if the exact object is stored in the priority queue."
+    },
+    {
         "peek",
         (PyCFunction) PyPriorityQueue_peek,
         METH_NOARGS,
@@ -280,6 +511,25 @@ static PyMethodDef PyPriorityQueue_methods[] = {
         "Return True when the priority queue is empty."
     },
     { NULL, NULL, 0, NULL }
+};
+
+/*
+ * Python object representing one backend-owned priority_queue_handle.
+ */
+static void PyPriorityQueueHandle_dealloc(PyPriorityQueueHandle *self)
+{
+    PyPriorityQueueHandle_invalidate(self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
+}
+
+static PyTypeObject PyPriorityQueueHandleType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+    .tp_name = "hpqlib.PriorityQueueHandle",
+    .tp_basicsize = sizeof(PyPriorityQueueHandle),
+    .tp_itemsize = 0,
+    .tp_dealloc = (destructor)PyPriorityQueueHandle_dealloc,
+    .tp_flags = Py_TPFLAGS_DEFAULT,
+    .tp_doc = "Opaque handle returned by PriorityQueue.push_handle().",
 };
 
 /*
@@ -340,6 +590,9 @@ PyMODINIT_FUNC PyInit_hpqlib(void)
 {
     PyObject *module;
 
+    if (PyType_Ready(&PyPriorityQueueHandleType) < 0)
+        return NULL;
+
     if (PyType_Ready(&PyPriorityQueueType) < 0)
         return NULL;
 
@@ -354,6 +607,17 @@ PyMODINIT_FUNC PyInit_hpqlib(void)
             (PyObject *) &PyPriorityQueueType
         ) < 0) {
         Py_DECREF(&PyPriorityQueueType);
+        Py_DECREF(module);
+        return NULL;
+    }
+
+    Py_INCREF(&PyPriorityQueueHandleType);
+    if (PyModule_AddObject(
+            module,
+            "PriorityQueueHandle",
+            (PyObject *)&PyPriorityQueueHandleType
+        ) < 0) {
+        Py_DECREF(&PyPriorityQueueHandleType);
         Py_DECREF(module);
         return NULL;
     }

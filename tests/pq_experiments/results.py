@@ -18,6 +18,7 @@ def write_push_trace_csv(path: Path, rows: Iterable[Dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "run",
+        "implementation",
         "source",
         "sequence",
         "node",

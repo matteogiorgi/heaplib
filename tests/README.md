@@ -86,11 +86,14 @@ Keep two concerns separate:
 
 Current files follow this split:
 
-- `python_priority_queue_test.py` checks the CPython binding for the native
+- `priority_queue_test.py` checks the CPython binding for the native
   priority queue;
+- `dijkstra_benchmark.py` mirrors the C Dijkstra benchmark at the Python layer;
 - `pq_experiments/` contains focused modules for graph parsing, Dijkstra
   tracing, prediction statistics, result-output helpers, and prototype queues;
-- `learning_augmented_priority_queue_test.py` checks those prototypes.
+- `augmented_priority_queue.py` checks the rank-prediction prototype and runs a
+  small DIMACS-backed Dijkstra experiment that writes generated JSON/CSV files
+  under `results/`.
 
 The experimental code in this directory is not part of the shipped hpqlib API.
 It should be treated as a small laboratory for exploring the paper's models
@@ -102,8 +105,8 @@ perfect, noisy, and bad predictions while always checking that `ExtractMin`
 returns the correct sorted order.
 
 The current Python experiments also include a lazy Dijkstra runner using
-`hpqlib.PriorityQueue` as its backend.  Its purpose is not to change the C data
-structure, but to collect traces from graph-search runs:
+`hpqlib.PriorityQueue` as its backend. Its purpose is not to change the C data
+structure, but to support benchmark runs and collect traces from graph searches:
 
 - final distances;
 - node extraction order;
@@ -112,7 +115,10 @@ structure, but to collect traces from graph-search runs:
 - aggregate Dijkstra counters such as pushes, pops, stale pops, extractions, and
   reached nodes.
 
-Those traces can be reused to build simple predictors for later runs, such as:
+Those traces can be reused to build simple predictors for later runs, matching
+the Dijkstra setting from the paper where keys inserted during one shortest-path
+run are used as rank predictions for subsequent runs from different sources.
+Current helpers support:
 
 - node-rank predictions from a previous extraction order;
 - key-rank predictions from keys inserted in a previous run.
@@ -122,6 +128,27 @@ prediction signals before any optional hint API is added to the C library.
 
 DIMACS shortest-path graphs, such as road-network `.gr` files from the 9th
 DIMACS Challenge, can be loaded with `load_dimacs_graph(path)`.  The loader uses
-a CSR representation backed by standard-library `array` objects.  The automatic
-tests use small generated fixtures; large real road networks should be reserved
-for manual checks or future benchmark scripts, not mandatory quick tests.
+a CSR representation backed by standard-library `array` objects.
+
+The C and Python sides both have Dijkstra benchmark entry points:
+
+```sh
+make benchmark-smoke
+make python-benchmark
+```
+
+By default this uses `graphs/dimacs/USA-road-d.NY.gr`. For another dataset, use:
+
+```sh
+make benchmark GRAPH=graphs/dimacs/USA-road-d.USA.gr SOURCE=1
+make python-benchmark GRAPH=graphs/dimacs/USA-road-d.USA.gr SOURCE=1
+```
+
+The learning-augmented experiment can also be run directly.  By default it
+loads only the first 50000 arcs to keep normal test runs quick; pass
+`--max-arcs 0` to use the whole graph.
+
+```sh
+python3 tests/augmented_priority_queue.py
+python3 tests/augmented_priority_queue.py graphs/dimacs/USA-road-d.NY.gr --sources 1,100,1000 --max-arcs 0
+```

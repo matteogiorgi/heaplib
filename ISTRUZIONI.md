@@ -69,26 +69,32 @@ Un primo set di operazioni delle priority-queue è il seguente:
 - size;
 - empty.
 
-Altre operazioni più complesse da implementare in un secondo momento sono le seguenti:
+Operazioni più complesse aggiunte dopo il primo nucleo dell'API:
 
 - decrease_key;
 - remove;
 - contains.
+
+`decrease_key` e `remove` lavorano tramite handle restituiti all'inserimento,
+così la posizione del nodo è nota come richiesto dagli heap di Fibonacci.
 
 
 
 
 # Sviluppo repo
 
-Le seguenti sono le due fasi di sviluppo del repository, con un focus iniziale sulla validazione delle idee di predizione in Python prima di toccare la C API.
+Le seguenti note descrivono la direzione sperimentale del repository. La C API
+ha già acquisito handle espliciti per le operazioni mirate; le predizioni
+learning-augmented restano invece, per ora, prototipi Python costruiti sopra la
+priority queue nativa.
 
 
 
 
-## Fase 1: esperimenti Python senza toccare la C API
+## Fase 1: esperimenti Python sulle predizioni
 
-Prima validiamo che le predizioni abbiano senso.
-Aggiungiamo in `tests/pq_experiments/` funzioni per Dijkstra con trace:
+Prima validiamo che le predizioni abbiano senso. In `tests/pq_experiments/`
+manteniamo funzioni riusabili per Dijkstra con trace:
 
 ```
 dijkstra_with_trace(graph, source, implementation="binary_heap")
@@ -112,11 +118,11 @@ che ritorna:
 }
 ```
 
-Poi aggiungiamo predittori:
+I predittori principali sono:
 - `build_node_rank_predictor(previous_extraction_order)`
 - `build_key_rank_predictor(previous_inserted_keys)`
 
-Per usare dataset reali di shortest path in formato DIMACS, aggiungiamo anche
+Per usare dataset reali di shortest path in formato DIMACS, manteniamo anche
 un parser riusabile:
 
 - `load_dimacs_graph(path)`
@@ -125,18 +131,17 @@ Il parser deve leggere file `.gr` con righe `c`, `p sp <nodes> <arcs>` e
 `a <tail> <head> <weight>`, come i grafi stradali del 9th DIMACS Challenge.
 La rappresentazione in memoria dei grafi DIMACS deve essere CSR, usando `array`
 della standard library per ridurre l'overhead sui grafi grandi.
-I test automatici devono usare fixture piccole; grafi grandi come
-i dataset DIMACS reali sono destinati a esperimenti o benchmark manuali e non
-devono essere tracciati in git.
+I test automatici devono restare leggeri: lo script learning-augmented può
+limitare il numero di archi caricati, mentre i dataset DIMACS reali non devono
+essere tracciati in git.
 
-E testiamo:
+Testiamo:
 1. Dijkstra produce distanze corrette;
 2. una run precedente genera predizioni;
 3. le predizioni hanno errori misurabili;
 4. le predizioni non rompono la correttezza perché la C queue resta il backend reale.
 
-Per completare questa fase, raccogliamo nei test e nei risultati manuali dati
-che:
+Per questa fase, raccogliamo nei test e nei risultati generati dati che:
 
 - usa davvero un grafo DIMACS scaricato localmente;
 - esegue Dijkstra da più sorgenti;
@@ -151,9 +156,9 @@ sperimentali finché il progetto resta piccolo.
 
 
 
-## Fase 2: hint opzionale nella C API
+## Fase 2: possibile hint opzionale nella C API
 
-Solo dopo aggiungiamo:
+Solo se i dati Python mostrano un beneficio chiaro, potremo aggiungere:
 
 ```
 int priority_queue_push_with_hint(

@@ -2,15 +2,15 @@
 
 hpqlib is a C99 heap-priority-queue library with a small CPython binding.
 
-The documentation is organized as a reference first: public types and functions
-are documented with signatures, parameters, return values, ownership rules, and
-failure behavior.
+The C API reference is generated from the public and internal C sources with
+Doxygen. The Markdown files in this directory provide architecture notes,
+backend summaries, Python binding notes, and build instructions.
 
-## API Reference
+## Reference
 
-- [priority_queue](api/priority_queue.md): public C abstract data type.
-- [Heap Implementations](api/implementations.md): available heap backends.
-- [Python API](api/python.md): `hpqlib.PriorityQueue` constructor, methods, and
+- C API reference: run `make docs` and open `build/docs/html/index.html`.
+- [Heap Implementations](implementations.md): available heap backends.
+- [Python API](python.md): `hpqlib.PriorityQueue` constructor, methods, and
   exceptions.
 
 ## Build And Packaging

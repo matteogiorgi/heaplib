@@ -6,8 +6,24 @@
 #include "heaps/fibonacci_heap.h"
 #include "heaps/kaplan_heap.h"
 
-/*
- * Initialize the base object shared by all concrete priority queues.
+/**
+ * @file priority_queue.c
+ * @brief Public priority_queue dispatch layer and backend factory.
+ *
+ * This file contains the only public-operation implementations. They validate
+ * NULL-handle edge cases once, then dispatch to the selected backend through
+ * the private vtable.
+ *
+ * Keeping dispatch here gives every backend the same external behavior for
+ * unsupported implementations, missing comparators, and NULL queue handles.
+ */
+
+/**
+ * @ingroup internals
+ * @brief Initialize the base object shared by all concrete priority queues.
+ *
+ * Constructors call this after allocating their concrete object. No heap
+ * invariant is established here beyond storing the vtable and comparator.
  */
 void priority_queue_init(
     struct priority_queue *queue,
@@ -19,12 +35,16 @@ void priority_queue_init(
     queue->cmp = cmp;
 }
 
-/*
- * Public factory for priority queues.
- *
- * The factory keeps implementation selection centralized so callers do not
- * depend on private backend headers or concrete object layouts.
- */
+void priority_queue_handle_init(
+    struct priority_queue_handle *handle,
+    struct priority_queue *queue,
+    void *item
+)
+{
+    handle->queue = queue;
+    handle->item = item;
+}
+
 struct priority_queue *priority_queue_create(
     enum priority_queue_implementation implementation,
     priority_queue_cmp_fn cmp
@@ -45,12 +65,6 @@ struct priority_queue *priority_queue_create(
     }
 }
 
-/*
- * Public API dispatch functions.
- *
- * These wrappers define the NULL-handle behavior once and keep concrete
- * implementations focused on valid queue instances.
- */
 void priority_queue_destroy(struct priority_queue *queue)
 {
     if (queue == NULL)
@@ -65,6 +79,51 @@ int priority_queue_push(struct priority_queue *queue, void *item)
         return -1;
 
     return queue->vtable->push(queue, item);
+}
+
+struct priority_queue_handle *priority_queue_push_handle(
+    struct priority_queue *queue,
+    void *item
+)
+{
+    if (queue == NULL)
+        return NULL;
+
+    return queue->vtable->push_handle(queue, item);
+}
+
+int priority_queue_decrease_key(
+    struct priority_queue *queue,
+    struct priority_queue_handle *handle
+)
+{
+    if (queue == NULL)
+        return -1;
+    if (handle == NULL || handle->queue != queue)
+        return -1;
+
+    return queue->vtable->decrease_key(queue, handle);
+}
+
+void *priority_queue_remove(
+    struct priority_queue *queue,
+    struct priority_queue_handle *handle
+)
+{
+    if (queue == NULL)
+        return NULL;
+    if (handle == NULL || handle->queue != queue)
+        return NULL;
+
+    return queue->vtable->remove(queue, handle);
+}
+
+int priority_queue_contains(const struct priority_queue *queue, const void *item)
+{
+    if (queue == NULL)
+        return 0;
+
+    return queue->vtable->contains(queue, item);
 }
 
 void *priority_queue_peek(const struct priority_queue *queue)

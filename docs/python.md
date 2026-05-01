@@ -72,6 +72,77 @@ Reference behavior:
 - the reference is released when the item is popped or when the queue is
   destroyed.
 
+### push_handle
+
+```python
+handle = queue.push_handle(item)
+```
+
+Inserts `item` and returns an opaque `PriorityQueueHandle`.
+
+The handle can be passed to `decrease_key()` and `remove()` while the item is
+still stored in the same queue.
+
+Returns:
+
+- a `PriorityQueueHandle` on success.
+
+Raises:
+
+- `MemoryError` if insertion fails in the native backend.
+
+Handle lifetime:
+
+- handles are invalidated when their item is removed by `remove()` or `pop()`;
+- handles are invalidated when the queue is destroyed;
+- using an invalid handle raises `ValueError`.
+
+### decrease_key
+
+```python
+queue.decrease_key(handle)
+```
+
+Repairs heap order after the handled object's key has changed so that it should
+move closer to the minimum.
+
+This mirrors the C API: mutate the object first, then call `decrease_key()` with
+the handle returned by `push_handle()`.
+
+Raises:
+
+- `TypeError` if the argument is not a `PriorityQueueHandle`;
+- `ValueError` if the handle is stale or belongs to another queue.
+
+### remove
+
+```python
+item = queue.remove(handle)
+```
+
+Removes and returns the item identified by `handle`.
+
+Raises:
+
+- `TypeError` if the argument is not a `PriorityQueueHandle`;
+- `ValueError` if the handle is stale or belongs to another queue.
+
+Reference behavior:
+
+- the stored strong reference is transferred back to Python as the return value;
+- the handle becomes invalid after a successful remove.
+
+### contains
+
+```python
+present = queue.contains(item)
+```
+
+Returns `True` if the exact object is stored in the queue.
+
+This is an identity check, not an equality check. Two distinct objects that
+compare equal are still treated as different objects.
+
 ### peek
 
 ```python
@@ -145,4 +216,24 @@ assert queue.peek() == 1
 assert queue.pop() == 1
 assert len(queue) == 2
 assert bool(queue)
+```
+
+Handle-based operations:
+
+```python
+from dataclasses import dataclass
+
+@dataclass(order=True)
+class Entry:
+    priority: int
+    value: str
+
+queue = hpqlib.PriorityQueue(implementation="fibonacci_heap")
+entry = Entry(10, "task")
+handle = queue.push_handle(entry)
+
+entry.priority = 1
+queue.decrease_key(handle)
+
+assert queue.remove(handle) is entry
 ```
